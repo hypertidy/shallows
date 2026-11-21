@@ -20,6 +20,12 @@ JavaScript port of the same kernel live in a page (`shallows.html`,
 `src/core/shallows.js`, `src/core/terrain.js`); on the same inputs the port
 and this package agree to 1e-12 or better.
 
+`inst/parity/parity.json` holds that agreement: small terrain and solver
+problems as plain data with this package's results, written by
+`inst/parity/make-parity.R`. The tests here check the package still
+reproduces the file, and the JavaScript tests in playproj must reproduce a
+copy of it. Regenerate it only when results are meant to change.
+
 ## What it solves
 
     h_t + (hu)_x + (hv)_y = R
