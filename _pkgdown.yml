@@ -35,11 +35,15 @@ reference:
   - sw_continue
   - sw_volume
   - sw_coriolis
-- title: Rasters in and out
-  desc: Beds from terra SpatRasters, results back as georeferenced rasters.
+- title: Grids in and out
+  desc: >
+    Beds from GDAL via gdalraster, results back as georeferenced grids
+    (plot with ximage) or GeoTIFF.
   contents:
   - sw_from_rast
-  - sw_rast
+  - sw_frames
+  - sw_write
+  - sw_matrix
 - title: Terrain
   desc: Generate synthetic beds, extract real ones, fill lakes and seas.
   contents:

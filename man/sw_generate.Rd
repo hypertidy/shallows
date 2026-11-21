@@ -12,7 +12,7 @@ sw_generate(
   dy = dx,
   ...,
   noise = NULL,
-  as = c("rast", "matrix")
+  as = c("grid", "matrix")
 )
 }
 \arguments{
@@ -27,8 +27,10 @@ sw_generate(
 \item{noise}{NULL, or a list with `amp` (m) and optionally `scale`,
 `octaves`, `gain`, `seed` for [sw_fbm()]}
 
-\item{as}{"rast" for a SpatRaster (extent in local metres, no CRS) or
-"matrix"}
+\item{as}{"grid" for a grid in local metres with no CRS (a row-major
+vector with a `gis` attribute, as from `gdalraster::read_ds()`; plot it
+with `ximage::ximage()`, give it to [sw_from_rast()]) or "matrix"
+(with `dx`, `dy` attributes)}
 }
 \description{
 Shapes you can reason about, with optional fractal roughness on top.

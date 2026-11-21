@@ -37,32 +37,64 @@ sw_local_crs <- function(lon, lat) {
   sprintf("/vsicurl/https://copernicus-dem-30m.s3.amazonaws.com/%s/%s.tif", nm, nm)
 }
 
+# GDAL source names to warp from, or NULL when the source cannot cover the
+# window (ll_ext is xmin, xmax, ymin, ymax in degrees)
 .open_source <- function(name, ll_ext) {
   if (name == "tas2m") {
     # Tasmania and its islands, roughly
     if (ll_ext[2] < 143.5 || ll_ext[1] > 148.6 || ll_ext[4] < -43.8 || ll_ext[3] > -39.4) return(NULL)
-    return(terra::rast(paste0("/vsicurl/", sw_sources()$url[1])))
+    return(paste0("/vsicurl/", sw_sources()$url[1]))
   }
   if (name == "glo30") {
-    ok <- Filter(function(u) !inherits(try(suppressWarnings(terra::rast(u)), silent = TRUE), "try-error"),
-                 .glo30_tiles(ll_ext))
+    tiles <- .glo30_tiles(ll_ext)
+    ok <- tiles[vapply(tiles, function(u) isTRUE(gdalraster::vsi_stat(u)), logical(1))]
     if (!length(ok)) return(NULL)  # open ocean: no tiles
-    return(if (length(ok) == 1) terra::rast(ok) else terra::vrt(ok))
+    return(ok)
   }
-  if (name == "gebco") return(terra::rast(paste0("/vsicurl/", sw_sources()$url[3])))
+  if (name == "gebco") return(paste0("/vsicurl/", sw_sources()$url[3]))
   stop("unknown source ", name)
+}
+
+# Warp source(s) onto the target grid (te = xmin, ymin, xmax, ymax in the
+# target CRS); row-major values with NA where the source has no data, or
+# NULL if a single source does not reach the window
+.warp_source <- function(dsn, te, nx, ny, wkt, res) {
+  ds <- methods::new(gdalraster::GDALRaster, dsn[1])
+  srs <- ds$getProjection(); r <- ds$res(); bb <- ds$bbox()
+  ds$close()
+  if (length(dsn) == 1L) {
+    # window in the source's CRS, with a margin of a few source cells
+    w <- gdalraster::transform_bounds(te, wkt, srs)
+    m <- 4 * max(r)
+    if (w[1] > bb[3] + m || w[3] < bb[1] - m || w[2] > bb[4] + m || w[4] < bb[2] - m) return(NULL)
+  }
+  finer <- max(r) * (if (gdalraster::srs_is_geographic(srs)) 111000 else 1) < res
+  out <- paste0("/vsimem/", basename(tempfile("shallows_")), ".tif")
+  on.exit(gdalraster::vsi_unlink(out))
+  # gdalwarp reads the right overview level of a COG, so a coarse grid over
+  # a fine source reads only what it needs
+  gdalraster::warp(dsn, out, wkt,
+                   cl_arg = c("-te", sprintf("%.17g", te), "-ts", nx, ny,
+                              "-r", if (finer) "average" else "bilinear",
+                              "-ot", "Float64", "-dstnodata", "-99999"),
+                   quiet = TRUE)
+  o <- methods::new(gdalraster::GDALRaster, out)
+  v <- as.vector(gdalraster::read_ds(o))
+  o$close()
+  v[!is.finite(v) | v == -99999] <- NA
+  v
 }
 
 #' Extract a bed for any place
 #'
 #' Builds a grid of `res` metre cells, `size` metres across, centred on
 #' `lon`, `lat` in a local metric CRS, and fills it from the elevation
-#' sources in order (finest first). Each source is cropped in its own CRS
-#' and warped onto the grid (cell averages when the source is finer than the
-#' grid, bilinear when it is coarser). Later sources fill only cells the
-#' earlier ones left empty. Copernicus GLO-30 has no sea floor (sea cells
-#' are near 0 m), so where GEBCO says sea and GLO-30 is within `sea_tol` of
-#' zero, GEBCO's depth is used.
+#' sources in order (finest first). Each source is warped onto the grid with
+#' gdalraster (cell averages when the source is finer than the grid,
+#' bilinear when it is coarser). Later sources fill only cells the earlier
+#' ones left empty. Copernicus GLO-30 has no sea floor (sea cells are near
+#' 0 m), so where GEBCO says sea and GLO-30 is within `sea_tol` of zero,
+#' GEBCO's depth is used.
 #'
 #' The sources use different vertical datums (see [sw_sources()]); they
 #' agree to about a metre around Tasmania, which matters for tides but not
@@ -75,48 +107,41 @@ sw_local_crs <- function(lon, lat) {
 #' @param crs target CRS; default [sw_local_crs()]
 #' @param sea_tol GLO-30 values within this of 0 m count as sea where GEBCO
 #'   is below 0
-#' @return SpatRaster with layers `z` (m) and `source` (index into
-#'   `sources`, 0 where nothing covered the cell)
+#' @return the bed (m) as a grid: a row-major vector with a `gis` attribute
+#'   (extent and CRS, as from `gdalraster::read_ds()`), ready for
+#'   [sw_from_rast()] and `ximage::ximage()`. Attribute `source` is an
+#'   integer matrix saying which of `sources` filled each cell (0 where
+#'   none did); attributes `sources`, `lon` and `lat` record the call
 #' @export
 sw_extract <- function(lon, lat, size = 2000, res = 10,
                        sources = c("tas2m", "glo30", "gebco"),
                        crs = sw_local_crs(lon, lat), sea_tol = 0.5) {
-  if (!requireNamespace("terra", quietly = TRUE)) stop("needs the terra package")
+  .need_gdalraster()
   size <- rep(size, length.out = 2)
-  ctr <- terra::crds(terra::project(terra::vect(cbind(lon, lat), crs = "EPSG:4326"), crs))
+  wkt <- gdalraster::srs_to_wkt(crs)
+  ctr <- gdalraster::transform_xy(cbind(lon, lat), "EPSG:4326", wkt)
   nx <- max(2L, round(size[1] / res)); ny <- max(2L, round(size[2] / res))
-  tmpl <- terra::rast(nrows = ny, ncols = nx, crs = crs,
-                      extent = terra::ext(ctr[1] - nx * res / 2, ctr[1] + nx * res / 2,
-                                          ctr[2] - ny * res / 2, ctr[2] + ny * res / 2))
-  ll <- as.vector(terra::ext(terra::project(terra::as.polygons(terra::ext(tmpl), crs = crs), "EPSG:4326")))
-  z <- terra::init(tmpl, NA_real_); src <- terra::init(tmpl, 0L)
+  te <- c(ctr[1] - nx * res / 2, ctr[2] - ny * res / 2, ctr[1] + nx * res / 2, ctr[2] + ny * res / 2)
+  ll <- gdalraster::transform_bounds(te, wkt, "EPSG:4326")[c(1, 3, 2, 4)]
+  z <- rep(NA_real_, nx * ny); src <- integer(nx * ny)
   gebco <- NULL
   for (k in seq_along(sources)) {
-    r <- .open_source(sources[k], ll)
-    if (is.null(r)) next
-    # window in the source's CRS, with a margin of a few source cells
-    w <- terra::ext(terra::project(terra::as.polygons(terra::ext(tmpl), crs = crs), terra::crs(r)))
-    w <- terra::extend(w, 4 * max(terra::res(r)))
-    if (is.null(terra::intersect(w, terra::ext(r)))) next
-    finer <- max(terra::res(r)) * (if (terra::is.lonlat(r)) 111000 else 1) < res
-    # GDALWarp reads the right overview level of a COG, so a coarse grid over
-    # a fine source reads only what it needs
-    rw <- terra::project(r, tmpl, method = if (finer) "average" else "bilinear", by_util = TRUE)
-    names(rw) <- "z"
+    dsn <- .open_source(sources[k], ll)
+    if (is.null(dsn)) next
+    rw <- .warp_source(dsn, te, nx, ny, wkt, res)
+    if (is.null(rw)) next
     if (sources[k] == "gebco") gebco <- rw
     fill <- is.na(z) & !is.na(rw)
-    z <- terra::cover(z, rw)
-    src <- terra::ifel(fill, k, src)
+    z[fill] <- rw[fill]
+    src[fill] <- k
   }
   # GLO-30 sea cells: take GEBCO's depth
   kg <- match("glo30", sources)
   if (!is.na(kg) && !is.null(gebco)) {
-    sea <- (src == kg) & (abs(z) <= sea_tol) & (gebco < 0)
-    z <- terra::ifel(sea, gebco, z)
-    src <- terra::ifel(sea, match("gebco", sources), src)
+    sea <- src == kg & !is.na(z) & abs(z) <= sea_tol & !is.na(gebco) & gebco < 0
+    z[sea] <- gebco[sea]
+    src[sea] <- match("gebco", sources)
   }
-  out <- c(z, src)
-  names(out) <- c("z", "source")
-  terra::metags(out) <- c(sources = paste(sources, collapse = ","), lon = lon, lat = lat)
-  out
+  .gis(matrix(z, ny, nx, byrow = TRUE), te[c(1, 3, 2, 4)], wkt,
+       source = matrix(src, ny, nx, byrow = TRUE), sources = sources, lon = lon, lat = lat)
 }

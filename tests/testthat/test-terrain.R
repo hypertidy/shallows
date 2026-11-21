@@ -36,7 +36,11 @@ test_that("periodic edges must come in pairs", {
 test_that("extraction gives a local metre grid (network)", {
   skip_on_cran()
   skip_if(Sys.getenv("SHALLOWS_NET") == "", "set SHALLOWS_NET=1 to run network tests")
+  skip_if_not_installed("gdalraster")
   d <- sw_extract(147.3, -42.9, size = 2000, res = 50)
-  expect_equal(names(d), c("z", "source"))
-  expect_equal(terra::res(d), c(50, 50))
+  expect_equal(attr(d, "gis")$dim[1:2], c(40, 40))
+  b <- attr(d, "gis")$bbox
+  expect_equal((b[3] - b[1]) / 40, 50)
+  expect_true(all(attr(d, "source") >= 1))
+  expect_false(anyNA(d))
 })

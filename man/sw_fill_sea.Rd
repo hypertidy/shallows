@@ -7,9 +7,12 @@
 sw_fill_sea(z, level = 0)
 }
 \arguments{
-\item{z}{bed matrix}
+\item{z}{bed matrix or grid (see [sw_matrix()])}
 
 \item{level}{sea level (m)}
+}
+\value{
+depth matrix
 }
 \description{
 Depth of water standing at `level` in cells below it that connect

@@ -4,8 +4,9 @@
 #' column 1 is the west edge. `hv` is momentum towards increasing row
 #' number (southward on a north-up raster).
 #'
-#' @param z bed elevation matrix (m)
-#' @param h initial depth (m), matrix or scalar; or give `eta`
+#' @param z bed elevation (m), a matrix or a grid (see [sw_matrix()]); use
+#'   [sw_from_rast()] to keep a grid's extent and CRS
+#' @param h initial depth (m), matrix, grid or scalar; or give `eta`
 #' @param eta optional initial water surface elevation; depth is
 #'   `pmax(eta - z, 0)`
 #' @param hu,hv initial momentum (m^2/s), matrix or scalar
@@ -16,18 +17,20 @@
 #'   Positive in the northern hemisphere, negative in the southern; see
 #'   [sw_coriolis()]
 #' @param g gravity (m/s^2)
-#' @param extent,crs optional georeferencing carried through to output
+#' @param extent,crs optional georeferencing carried through to output:
+#'   extent as `c(xmin, xmax, ymin, ymax)` (the `ximage::ximage()`
+#'   convention) and the CRS as WKT or any string GDAL understands
 #' @useDynLib shallows, .registration = TRUE
 #' @export
 sw_state <- function(z, h = 0, eta = NULL, hu = 0, hv = 0, dx = 1, dy = dx,
                      manning = 0, rain = 0, f = 0, g = 9.81,
                      extent = NULL, crs = NULL) {
-  z <- as.matrix(z)
+  z <- sw_matrix(z)
   storage.mode(z) <- "double"
   if (anyNA(z)) stop("bed 'z' has missing values; fill or mask them first")
   full <- function(x) {
     if (length(x) == 1L) x <- matrix(x, nrow(z), ncol(z))
-    x <- as.matrix(x)
+    x <- sw_matrix(x)
     if (!all(dim(x) == dim(z))) stop("all fields must match dim(z)")
     storage.mode(x) <- "double"
     x[is.na(x)] <- 0
@@ -134,20 +137,30 @@ sw_continue <- function(run, ...) {
 #' Coriolis parameter
 #'
 #' `2 * omega * sin(latitude)`: positive in the northern hemisphere and
-#' negative in the southern. Give a SpatRaster to get one value per cell
-#' (its cell centres are transformed to longitude and latitude), or a
-#' numeric vector of latitudes in degrees.
-#' @param x SpatRaster, or latitudes in degrees
+#' negative in the southern. Give a state or a grid with a CRS to get one
+#' value per cell (cell centres are transformed to longitude and latitude
+#' with gdalraster), or a numeric vector of latitudes in degrees.
+#' @param x a state from [sw_state()] or [sw_from_rast()] with extent and
+#'   CRS, a grid with a CRS (see [sw_matrix()]), or latitudes in degrees
 #' @param omega Earth's rotation rate (rad/s)
-#' @return matrix (for a raster, oriented like [sw_from_rast()]) or vector
+#' @return matrix (for a state or grid, oriented like the bed) or vector
 #' @export
 sw_coriolis <- function(x, omega = 7.2921159e-5) {
-  if (inherits(x, "SpatRaster")) {
-    if (!requireNamespace("terra", quietly = TRUE)) stop("needs the terra package")
-    xy <- terra::xyFromCell(x, seq_len(terra::ncell(x)))
-    ll <- if (terra::is.lonlat(x)) xy else
-      terra::geom(terra::project(terra::vect(xy, crs = terra::crs(x)), "EPSG:4326"))[, c("x", "y")]
-    return(matrix(2 * omega * sin(ll[, 2] * pi / 180), terra::nrow(x), terra::ncol(x), byrow = TRUE))
+  if (inherits(x, "sw_state") || .is_gis(x)) {
+    if (inherits(x, "sw_state")) {
+      ext <- x$extent; srs <- x$crs; ny <- nrow(x$z); nx <- ncol(x$z)
+    } else {
+      ext <- .gis_extent(x); srs <- attr(x, "gis")$srs
+      nx <- attr(x, "gis")$dim[1]; ny <- attr(x, "gis")$dim[2]
+    }
+    if (is.null(ext) || is.null(srs) || !nzchar(srs)) stop("needs an extent and a CRS")
+    .need_gdalraster()
+    xs <- ext[1] + (seq_len(nx) - 0.5) * (ext[2] - ext[1]) / nx
+    ys <- ext[4] - (seq_len(ny) - 0.5) * (ext[4] - ext[3]) / ny
+    xy <- cbind(rep(xs, ny), rep(ys, each = nx))  # row major
+    lat <- if (gdalraster::srs_is_geographic(srs)) xy[, 2] else
+      gdalraster::transform_xy(xy, srs, "EPSG:4326")[, 2]
+    return(matrix(2 * omega * sin(lat * pi / 180), ny, nx, byrow = TRUE))
   }
   2 * omega * sin(x * pi / 180)
 }

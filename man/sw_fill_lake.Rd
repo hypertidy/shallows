@@ -7,11 +7,14 @@
 sw_fill_lake(z, i0, j0, level)
 }
 \arguments{
-\item{z}{bed matrix}
+\item{z}{bed matrix or grid (see [sw_matrix()])}
 
 \item{i0, j0}{row and column of a cell in the lake (1-based)}
 
 \item{level}{water level (m)}
+}
+\value{
+depth matrix
 }
 \description{
 Depth of water standing at `level` in the cells connected (4-neighbour) to

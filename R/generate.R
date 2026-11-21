@@ -94,11 +94,13 @@ sw_fbm <- function(X, Y, scale = 200, octaves = 5, gain = 0.5, seed = 1) {
 #' @param ... shape parameters, replacing the defaults (see `sw_shapes()`)
 #' @param noise NULL, or a list with `amp` (m) and optionally `scale`,
 #'   `octaves`, `gain`, `seed` for [sw_fbm()]
-#' @param as "rast" for a SpatRaster (extent in local metres, no CRS) or
-#'   "matrix"
+#' @param as "grid" for a grid in local metres with no CRS (a row-major
+#'   vector with a `gis` attribute, as from `gdalraster::read_ds()`; plot it
+#'   with `ximage::ximage()`, give it to [sw_from_rast()]) or "matrix"
+#'   (with `dx`, `dy` attributes)
 #' @export
 sw_generate <- function(shape = names(.shapes), nx = 200, ny = nx, dx = 5, dy = dx, ...,
-                        noise = NULL, as = c("rast", "matrix")) {
+                        noise = NULL, as = c("grid", "matrix")) {
   shape <- match.arg(shape); as <- match.arg(as)
   q <- utils::modifyList(.shapes[[shape]], list(...))
   if (!all(names(list(...)) %in% names(.shapes[[shape]])))
@@ -112,8 +114,7 @@ sw_generate <- function(shape = names(.shapes), nx = 200, ny = nx, dx = 5, dy = 
   }
   z <- matrix(z, ny, nx)
   if (as == "matrix") return(structure(z, dx = dx, dy = dy))
-  if (!requireNamespace("terra", quietly = TRUE)) stop("needs the terra package, or use as = 'matrix'")
-  terra::rast(z, extent = terra::ext(-nx * dx / 2, nx * dx / 2, -ny * dy / 2, ny * dy / 2), crs = "")
+  .gis(z, c(-nx * dx / 2, nx * dx / 2, -ny * dy / 2, ny * dy / 2))
 }
 
 #' Default parameters of the generator shapes
@@ -126,12 +127,13 @@ sw_shapes <- function() .shapes
 #' cell (`i0`, `j0`) that lie below it: a reservoir, crater or hollow full to
 #' a level, on any bed. Matches `fillLake()` in playproj
 #' `src/core/terrain.js`.
-#' @param z bed matrix
+#' @param z bed matrix or grid (see [sw_matrix()])
 #' @param i0,j0 row and column of a cell in the lake (1-based)
 #' @param level water level (m)
+#' @return depth matrix
 #' @export
 sw_fill_lake <- function(z, i0, j0, level) {
-  z <- as.matrix(z); ny <- nrow(z); nx <- ncol(z)
+  z <- sw_matrix(z); ny <- nrow(z); nx <- ncol(z)
   h <- matrix(0, ny, nx)
   if (!(z[i0, j0] < level)) return(h)
   seen <- matrix(FALSE, ny, nx); seen[i0, j0] <- TRUE
@@ -153,11 +155,12 @@ sw_fill_lake <- function(z, i0, j0, level) {
 #' Depth of water standing at `level` in cells below it that connect
 #' (4-neighbour) to the edge of the grid; inland hollows stay dry. Matches
 #' `fillSea()` in playproj `src/core/terrain.js`.
-#' @param z bed matrix
+#' @param z bed matrix or grid (see [sw_matrix()])
 #' @param level sea level (m)
+#' @return depth matrix
 #' @export
 sw_fill_sea <- function(z, level = 0) {
-  z <- as.matrix(z); ny <- nrow(z); nx <- ncol(z)
+  z <- sw_matrix(z); ny <- nrow(z); nx <- ncol(z)
   h <- matrix(0, ny, nx); seen <- matrix(FALSE, ny, nx)
   edge <- rbind(cbind(1, seq_len(nx)), cbind(ny, seq_len(nx)), cbind(seq_len(ny), 1), cbind(seq_len(ny), nx))
   front <- unique(edge[z[edge] < level, , drop = FALSE])

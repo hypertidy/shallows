@@ -21,9 +21,10 @@ sw_state(
 )
 }
 \arguments{
-\item{z}{bed elevation matrix (m)}
+\item{z}{bed elevation (m), a matrix or a grid (see [sw_matrix()]); use
+[sw_from_rast()] to keep a grid's extent and CRS}
 
-\item{h}{initial depth (m), matrix or scalar; or give `eta`}
+\item{h}{initial depth (m), matrix, grid or scalar; or give `eta`}
 
 \item{eta}{optional initial water surface elevation; depth is
 `pmax(eta - z, 0)`}
@@ -42,7 +43,9 @@ Positive in the northern hemisphere, negative in the southern; see
 
 \item{g}{gravity (m/s^2)}
 
-\item{extent, crs}{optional georeferencing carried through to output}
+\item{extent, crs}{optional georeferencing carried through to output:
+extent as `c(xmin, xmax, ymin, ymax)` (the `ximage::ximage()`
+convention) and the CRS as WKT or any string GDAL understands}
 }
 \description{
 Matrices are oriented like a raster: row 1 is the top (north) edge,

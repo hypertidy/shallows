@@ -1,3 +1,24 @@
+# shallows 0.1.0.9003
+
+* Raster input and output now use gdalraster instead of terra, and plots use
+  ximage. Both are in Suggests; terra is no longer used.
+* Grids follow `gdalraster::read_ds()`: a row-major vector with a `gis`
+  attribute (bbox, dim, srs). `ximage::ximage()` plots one directly.
+  Extents in states are `c(xmin, xmax, ymin, ymax)`, the ximage convention.
+* Breaking: `sw_rast()` is replaced by `sw_frames()` (a list of grids, one
+  per output time) and `sw_write()` (multi-band GeoTIFF with band
+  descriptions and times).
+* Breaking: `sw_generate()` returns a grid by default (`as = "grid"`)
+  instead of a SpatRaster, and `sw_extract()` returns the bed as a grid with
+  a `source` attribute instead of a two-layer SpatRaster.
+* `sw_from_rast()` takes a file or GDAL source name, a
+  `gdalraster::GDALRaster`, or a grid. `sw_coriolis()` takes a state or grid
+  with a CRS.
+* New `sw_matrix()` gives a grid as a matrix. `sw_state()`, `sw_fill_lake()`
+  and `sw_fill_sea()` accept grids directly.
+* `inst/examples/mcrobies-storm.R` uses gdalraster (warp, hillshade, GeoTIFF
+  output) and ximage.
+
 # shallows 0.1.0.9002
 
 * New vignette, "Shallow water on raster grids with shallows": the model,

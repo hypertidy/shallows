@@ -7,16 +7,17 @@
 sw_coriolis(x, omega = 7.2921159e-05)
 }
 \arguments{
-\item{x}{SpatRaster, or latitudes in degrees}
+\item{x}{a state from [sw_state()] or [sw_from_rast()] with extent and
+CRS, a grid with a CRS (see [sw_matrix()]), or latitudes in degrees}
 
 \item{omega}{Earth's rotation rate (rad/s)}
 }
 \value{
-matrix (for a raster, oriented like [sw_from_rast()]) or vector
+matrix (for a state or grid, oriented like the bed) or vector
 }
 \description{
 `2 * omega * sin(latitude)`: positive in the northern hemisphere and
-negative in the southern. Give a SpatRaster to get one value per cell
-(its cell centres are transformed to longitude and latitude), or a
-numeric vector of latitudes in degrees.
+negative in the southern. Give a state or a grid with a CRS to get one
+value per cell (cell centres are transformed to longitude and latitude
+with gdalraster), or a numeric vector of latitudes in degrees.
 }

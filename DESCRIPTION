@@ -1,6 +1,6 @@
 Package: shallows
 Title: Well-Balanced Shallow Water Simulation on Raster Grids
-Version: 0.1.0.9002
+Version: 0.1.0.9003
 Authors@R: person("Michael", "Sumner", email = "mdsumner@gmail.com", role = c("aut", "cre"))
 Description: Prototype two-dimensional shallow water (Saint-Venant) solver on
     regular grids. First- or second-order finite volume scheme with the HLL
@@ -14,13 +14,16 @@ License: MIT + file LICENSE
 URL: https://github.com/hypertidy/shallows, https://hypertidy.github.io/shallows/
 BugReports: https://github.com/hypertidy/shallows/issues
 Encoding: UTF-8
+Imports:
+    methods
 LinkingTo: cpp11
 Suggests:
+    gdalraster,
     jsonlite,
     knitr,
     rmarkdown,
-    terra,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    ximage
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.1

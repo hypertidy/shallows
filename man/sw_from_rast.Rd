@@ -2,19 +2,20 @@
 % Please edit documentation in R/rast.R
 \name{sw_from_rast}
 \alias{sw_from_rast}
-\title{Build a state from a terra DEM}
+\title{Build a state from a DEM}
 \usage{
 sw_from_rast(dem, ...)
 }
 \arguments{
-\item{dem}{SpatRaster in metres: projected CRS, or none for a generated
-bed ([sw_generate()]); a `z` layer is used if there are several
-([sw_extract()])}
+\item{dem}{the bed in metres, in a projected CRS (or none, for a generated
+bed): a file or GDAL source name, a `gdalraster::GDALRaster`, or a grid
+as from [sw_generate()], [sw_extract()] or `gdalraster::read_ds()`. Only
+the first band is used}
 
 \item{...}{passed to [sw_state()] (h, eta, manning, rain, ...)}
 }
 \description{
-Reads the bed from a single-layer SpatRaster, keeping its extent and
-CRS so outputs can be written back as georeferenced rasters. Missing
-bed cells are filled with the maximum elevation plus 100 m (a high wall).
+Reads the bed from a raster, keeping its extent and CRS so outputs can be
+written back as georeferenced rasters. Missing bed cells are filled with
+the maximum elevation plus 100 m (a high wall).
 }
