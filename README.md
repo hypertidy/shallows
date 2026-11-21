@@ -8,8 +8,17 @@ is about 400 lines of C++ behind an Rcpp interface, and it runs a
 40 minute storm over 90,000 cells of real terrain in about three minutes on
 four cores.
 
-This lives in a playproj branch while it is a prototype; it is a
-self-contained R package (`R CMD INSTALL shallows`).
+Install from GitHub:
+
+```r
+remotes::install_github("hypertidy/shallows")
+```
+
+The package began in [hypertidy/playproj](https://github.com/hypertidy/playproj)
+and moved here with its history. playproj keeps a browser viewer that runs a
+JavaScript port of the same kernel live in a page (`shallows.html`,
+`src/core/shallows.js`, `src/core/terrain.js`); on the same inputs the port
+and this package agree to 1e-12 or better.
 
 ## What it solves
 
@@ -108,7 +117,8 @@ s <- sw_from_rast(bed, eta = 0)
 `shelf`, `island` and `reservoir` (a valley with a dam, intact or breached),
 with optional fractal roughness (`noise = list(amp, scale, octaves, gain,
 seed)`). The hash and noise are written so the same shape, size and seed give
-the same bed in R and in the browser (`src/core/terrain.js`), to 1e-13.
+the same bed in R and in the browser (`src/core/terrain.js` in
+hypertidy/playproj), to 1e-13.
 `sw_fill_lake()` and `sw_fill_sea()` start water standing at a level in a
 connected hollow or in everything open to the edge.
 

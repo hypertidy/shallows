@@ -11,6 +11,8 @@ Description: Prototype two-dimensional shallow water (Saint-Venant) solver on
     benchmark solutions (Ritter and Stoker dam breaks, Thacker paraboloid)
     used for validation.
 License: MIT + file LICENSE
+URL: https://github.com/hypertidy/shallows
+BugReports: https://github.com/hypertidy/shallows/issues
 Encoding: UTF-8
 LinkingTo: Rcpp
 Imports: Rcpp
