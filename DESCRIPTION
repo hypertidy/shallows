@@ -14,8 +14,7 @@ License: MIT + file LICENSE
 URL: https://github.com/hypertidy/shallows
 BugReports: https://github.com/hypertidy/shallows/issues
 Encoding: UTF-8
-LinkingTo: Rcpp
-Imports: Rcpp
+LinkingTo: cpp11
 Suggests: jsonlite, terra, testthat (>= 3.0.0)
 Config/testthat/edition: 3
-RoxygenNote: 7.3.1
+Config/roxygen2/version: 8.1.1

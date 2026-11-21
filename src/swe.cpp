@@ -14,12 +14,14 @@
 // (spacing dy). hv is momentum in the direction of increasing row index.
 // Two ghost cells are kept on every side.
 
-#include <Rcpp.h>
+#include <cpp11.hpp>
+#include <R_ext/Arith.h>
 #include <cmath>
 #include <vector>
 #include <algorithm>
 
-using namespace Rcpp;
+using namespace cpp11;
+namespace writable = cpp11::writable;
 
 namespace {
 
@@ -331,13 +333,13 @@ struct Solver {
   }
 };
 
-NumericMatrix to_matrix(const Grid& G, const std::vector<double>& a) {
-  NumericMatrix m(G.ny, G.nx);
+SEXP to_matrix(const Grid& G, const std::vector<double>& a) {
+  writable::doubles_matrix<> m(G.ny, G.nx);
   for (int j = 0; j < G.nx; j++) for (int i = 0; i < G.ny; i++) m(i, j) = a[G.id(i, j)];
   return m;
 }
 
-void from_matrix(const Grid& G, const NumericMatrix& m, std::vector<double>& a) {
+void from_matrix(const Grid& G, const doubles_matrix<>& m, std::vector<double>& a) {
   for (int j = 0; j < G.nx; j++) for (int i = 0; i < G.ny; i++) a[G.id(i, j)] = m(i, j);
 }
 
@@ -349,12 +351,15 @@ double volume(const Grid& G, const State& s) {
 
 }  // namespace
 
-// [[Rcpp::export]]
-List swe_run_cpp(NumericMatrix h, NumericMatrix hu, NumericMatrix hv, NumericMatrix z,
-                 NumericMatrix manning, NumericMatrix rain, NumericMatrix fcor,
+// Inputs must already be double matrices / vectors (no coercion as in Rcpp);
+// sw_run() takes care of that. diag is returned as a list, made a data frame
+// on the R side.
+[[cpp11::register]]
+list swe_run_cpp(doubles_matrix<> h, doubles_matrix<> hu, doubles_matrix<> hv, doubles_matrix<> z,
+                 doubles_matrix<> manning, doubles_matrix<> rain, doubles_matrix<> fcor,
                  double dx, double dy, double g,
-                 NumericVector times, double cfl, int order,
-                 IntegerVector bc, double hdry, int max_steps, double dt_max) {
+                 doubles times, double cfl, int order,
+                 integers bc, double hdry, int max_steps, double dt_max) {
   int ny = h.nrow(), nx = h.ncol();
   Grid G(nx, ny, dx, dy, g);
   Solver S(G);
@@ -374,9 +379,10 @@ List swe_run_cpp(NumericMatrix h, NumericMatrix hu, NumericMatrix hv, NumericMat
   S.clean(U);
 
   int nt = times.size();
-  List H(nt), HU(nt), HV(nt);
-  NumericVector vol(nt), outcum(nt), raincum(nt), dtmin(nt), dtmax(nt), clip(nt);
-  IntegerVector nsteps(nt);
+  R_xlen_t ntx = nt;
+  writable::list H(ntx), HU(ntx), HV(ntx);
+  writable::doubles vol(ntx), outcum(ntx), raincum(ntx), dtmin(ntx), dtmax(ntx), clip(ntx);
+  writable::integers nsteps(ntx);
   double rain_rate_vol = 0.0;
   for (int i = 0; i < ny; i++) for (int j = 0; j < nx; j++) rain_rate_vol += rainv[G.id(i, j)];
   rain_rate_vol *= dx * dy;
@@ -426,15 +432,16 @@ List swe_run_cpp(NumericMatrix h, NumericMatrix hu, NumericMatrix hv, NumericMat
       S.clean(U);
       t += dt;
       steps++;
-      if (steps % 1000 == 0) checkUserInterrupt();
+      if (steps % 1000 == 0) check_user_interrupt();
     }
     H[k] = to_matrix(G, U.h); HU[k] = to_matrix(G, U.hu); HV[k] = to_matrix(G, U.hv);
     vol[k] = volume(G, U); outcum[k] = out_total; raincum[k] = rain_total;
     nsteps[k] = steps; dtmin[k] = dmin; dtmax[k] = dmax; clip[k] = S.clipped * dx * dy;
   }
-  return List::create(_["h"] = H, _["hu"] = HU, _["hv"] = HV,
-                      _["diag"] = DataFrame::create(_["time"] = times, _["volume"] = vol,
-                                                    _["outflow"] = outcum, _["rain"] = raincum,
-                                                    _["steps"] = nsteps, _["dt_min"] = dtmin,
-                                                    _["dt_max"] = dtmax, _["clipped"] = clip));
+  using namespace cpp11::literals;
+  writable::list diag({"time"_nm = times, "volume"_nm = vol,
+                       "outflow"_nm = outcum, "rain"_nm = raincum,
+                       "steps"_nm = nsteps, "dt_min"_nm = dtmin,
+                       "dt_max"_nm = dtmax, "clipped"_nm = clip});
+  return writable::list({"h"_nm = H, "hu"_nm = HU, "hv"_nm = HV, "diag"_nm = diag});
 }

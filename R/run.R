@@ -18,7 +18,6 @@
 #' @param g gravity (m/s^2)
 #' @param extent,crs optional georeferencing carried through to output
 #' @useDynLib shallows, .registration = TRUE
-#' @importFrom Rcpp evalCpp
 #' @export
 sw_state <- function(z, h = 0, eta = NULL, hu = 0, hv = 0, dx = 1, dy = dx,
                      manning = 0, rain = 0, f = 0, g = 9.81,
@@ -63,12 +62,17 @@ sw_run <- function(state, times, order = 2L, cfl = 0.45, bc = "wall",
   stopifnot(inherits(state, "sw_state"), all(diff(times) > 0), times[1] >= 0)
   bcv <- .bc(bc)
   s <- state
-  res <- swe_run_cpp(s$h, s$hu, s$hv, s$z, s$manning, s$rain,
-                     if (is.null(s$f)) 0 * s$z else s$f,
-                     s$dx, s$dy, s$g, as.double(times), cfl, as.integer(order),
-                     bcv, hdry, as.integer(max_steps), dt_max)
+  dm <- function(x) {
+    storage.mode(x) <- "double"
+    x
+  }
+  res <- swe_run_cpp(dm(s$h), dm(s$hu), dm(s$hv), dm(s$z), dm(s$manning), dm(s$rain),
+                     dm(if (is.null(s$f)) 0 * s$z else s$f),
+                     as.double(s$dx), as.double(s$dy), as.double(s$g), as.double(times),
+                     as.double(cfl), as.integer(order), as.integer(bcv), as.double(hdry),
+                     as.integer(max_steps), as.double(dt_max))
   v0 <- sum(s$h) * s$dx * s$dy
-  d <- res$diag
+  d <- as.data.frame(res$diag)
   d$budget_error <- d$volume - (v0 + d$rain - d$outflow)
   d$rel_budget_error <- d$budget_error / max(v0 + d$rain[nrow(d)], .Machine$double.eps)
   res$diag <- d
