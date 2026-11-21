@@ -1,5 +1,43 @@
 # Changelog
 
+## shallows 0.1.0.9003
+
+- Raster input and output now use gdalraster instead of terra, and plots
+  use ximage. Both are in Suggests; terra is no longer used.
+- Grids follow
+  [`gdalraster::read_ds()`](https://firelab.github.io/gdalraster/reference/read_ds.html):
+  a row-major vector with a `gis` attribute (bbox, dim, srs).
+  [`ximage::ximage()`](https://rdrr.io/pkg/ximage/man/ximage.html) plots
+  one directly. Extents in states are `c(xmin, xmax, ymin, ymax)`, the
+  ximage convention.
+- Breaking: `sw_rast()` is replaced by
+  [`sw_frames()`](https://hypertidy.github.io/shallows/reference/sw_frames.md)
+  (a list of grids, one per output time) and
+  [`sw_write()`](https://hypertidy.github.io/shallows/reference/sw_write.md)
+  (multi-band GeoTIFF with band descriptions and times).
+- Breaking:
+  [`sw_generate()`](https://hypertidy.github.io/shallows/reference/sw_generate.md)
+  returns a grid by default (`as = "grid"`) instead of a SpatRaster, and
+  [`sw_extract()`](https://hypertidy.github.io/shallows/reference/sw_extract.md)
+  returns the bed as a grid with a `source` attribute instead of a
+  two-layer SpatRaster.
+- [`sw_from_rast()`](https://hypertidy.github.io/shallows/reference/sw_from_rast.md)
+  takes a file or GDAL source name, a
+  [`gdalraster::GDALRaster`](https://firelab.github.io/gdalraster/reference/GDALRaster-class.html),
+  or a grid.
+  [`sw_coriolis()`](https://hypertidy.github.io/shallows/reference/sw_coriolis.md)
+  takes a state or grid with a CRS.
+- New
+  [`sw_matrix()`](https://hypertidy.github.io/shallows/reference/sw_matrix.md)
+  gives a grid as a matrix.
+  [`sw_state()`](https://hypertidy.github.io/shallows/reference/sw_state.md),
+  [`sw_fill_lake()`](https://hypertidy.github.io/shallows/reference/sw_fill_lake.md)
+  and
+  [`sw_fill_sea()`](https://hypertidy.github.io/shallows/reference/sw_fill_sea.md)
+  accept grids directly.
+- `inst/examples/mcrobies-storm.R` uses gdalraster (warp, hillshade,
+  GeoTIFF output) and ximage.
+
 ## shallows 0.1.0.9002
 
 - New vignette, “Shallow water on raster grids with shallows”: the

@@ -2,12 +2,12 @@
 
 Builds a grid of \`res\` metre cells, \`size\` metres across, centred on
 \`lon\`, \`lat\` in a local metric CRS, and fills it from the elevation
-sources in order (finest first). Each source is cropped in its own CRS
-and warped onto the grid (cell averages when the source is finer than
-the grid, bilinear when it is coarser). Later sources fill only cells
-the earlier ones left empty. Copernicus GLO-30 has no sea floor (sea
-cells are near 0 m), so where GEBCO says sea and GLO-30 is within
-\`sea_tol\` of zero, GEBCO's depth is used.
+sources in order (finest first). Each source is warped onto the grid
+with gdalraster (cell averages when the source is finer than the grid,
+bilinear when it is coarser). Later sources fill only cells the earlier
+ones left empty. Copernicus GLO-30 has no sea floor (sea cells are near
+0 m), so where GEBCO says sea and GLO-30 is within \`sea_tol\` of zero,
+GEBCO's depth is used.
 
 ## Usage
 
@@ -51,8 +51,11 @@ sw_extract(
 
 ## Value
 
-SpatRaster with layers \`z\` (m) and \`source\` (index into \`sources\`,
-0 where nothing covered the cell)
+the bed (m) as a grid: a row-major vector with a \`gis\` attribute
+(extent and CRS, as from \`gdalraster::read_ds()\`), ready for
+\[sw_from_rast()\] and \`ximage::ximage()\`. Attribute \`source\` is an
+integer matrix saying which of \`sources\` filled each cell (0 where
+none did); attributes \`sources\`, \`lon\` and \`lat\` record the call
 
 ## Details
 

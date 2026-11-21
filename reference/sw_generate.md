@@ -15,7 +15,7 @@ sw_generate(
   dy = dx,
   ...,
   noise = NULL,
-  as = c("rast", "matrix")
+  as = c("grid", "matrix")
 )
 ```
 
@@ -44,7 +44,10 @@ sw_generate(
 
 - as:
 
-  "rast" for a SpatRaster (extent in local metres, no CRS) or "matrix"
+  "grid" for a grid in local metres with no CRS (a row-major vector with
+  a \`gis\` attribute, as from \`gdalraster::read_ds()\`; plot it with
+  \`ximage::ximage()\`, give it to \[sw_from_rast()\]) or "matrix" (with
+  \`dx\`, \`dy\` attributes)
 
 ## Details
 

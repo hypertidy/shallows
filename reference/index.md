@@ -15,14 +15,19 @@ Build a state, run the solver, continue a run.
 - [`sw_coriolis()`](https://hypertidy.github.io/shallows/reference/sw_coriolis.md)
   : Coriolis parameter
 
-## Rasters in and out
+## Grids in and out
 
-Beds from terra SpatRasters, results back as georeferenced rasters.
+Beds from GDAL via gdalraster, results back as georeferenced grids (plot
+with ximage) or GeoTIFF.
 
 - [`sw_from_rast()`](https://hypertidy.github.io/shallows/reference/sw_from_rast.md)
-  : Build a state from a terra DEM
-- [`sw_rast()`](https://hypertidy.github.io/shallows/reference/sw_rast.md)
-  : Frames of a run as a georeferenced SpatRaster
+  : Build a state from a DEM
+- [`sw_frames()`](https://hypertidy.github.io/shallows/reference/sw_frames.md)
+  : Frames of a run as georeferenced grids
+- [`sw_write()`](https://hypertidy.github.io/shallows/reference/sw_write.md)
+  : Write the frames of a run to a GeoTIFF
+- [`sw_matrix()`](https://hypertidy.github.io/shallows/reference/sw_matrix.md)
+  : Matrix from a grid
 
 ## Terrain
 

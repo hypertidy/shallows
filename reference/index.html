@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">shallows</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,9 +88,9 @@
         </dt>
         <dd>Coriolis parameter</dd>
       </dl></div><div class="section level2">
-      <h2 id="rasters-in-and-out">Rasters in and out<a class="anchor" aria-label="anchor" href="#rasters-in-and-out"></a></h2>
+      <h2 id="grids-in-and-out">Grids in and out<a class="anchor" aria-label="anchor" href="#grids-in-and-out"></a></h2>
 
-      <div class="section-desc"><p>Beds from terra SpatRasters, results back as georeferenced rasters.</p></div>
+      <div class="section-desc"><p>Beds from GDAL via gdalraster, results back as georeferenced grids (plot with ximage) or GeoTIFF.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -102,14 +102,28 @@
           <code><a href="sw_from_rast.html">sw_from_rast()</a></code>
 
         </dt>
-        <dd>Build a state from a terra DEM</dd>
+        <dd>Build a state from a DEM</dd>
 
         <dt>
 
-          <code><a href="sw_rast.html">sw_rast()</a></code>
+          <code><a href="sw_frames.html">sw_frames()</a></code>
 
         </dt>
-        <dd>Frames of a run as a georeferenced SpatRaster</dd>
+        <dd>Frames of a run as georeferenced grids</dd>
+
+        <dt>
+
+          <code><a href="sw_write.html">sw_write()</a></code>
+
+        </dt>
+        <dd>Write the frames of a run to a GeoTIFF</dd>
+
+        <dt>
+
+          <code><a href="sw_matrix.html">sw_matrix()</a></code>
+
+        </dt>
+        <dd>Matrix from a grid</dd>
       </dl></div><div class="section level2">
       <h2 id="terrain">Terrain<a class="anchor" aria-label="anchor" href="#terrain"></a></h2>
 

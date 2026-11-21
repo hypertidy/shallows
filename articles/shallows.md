@@ -52,6 +52,11 @@ Matrices are oriented like a raster: row 1 is the north edge, column 1
 the west edge, `hu` is eastward momentum and `hv` is momentum towards
 increasing row number (southward on a north-up grid).
 
+Plots here use [ximage](https://github.com/hypertidy/ximage), which
+draws a matrix in that same raster order, placed by an extent given as
+`c(xmin, xmax, ymin, ymax)`; a state built from a DEM carries its extent
+in the same form.
+
 Here is a 2 m hump of water in the middle of a flat 1 m deep pool, 10 m
 cells, with walls on every edge:
 
@@ -103,9 +108,9 @@ to round-off, and here it does.
 
 op <- par(mfrow = c(1, 3), mar = c(1, 1, 2, 1))
 for (k in 1:3) {
-  image(t(run$h[[k]])[, n:1], asp = 1, axes = FALSE, zlim = c(0.4, 1.6),
-        col = hcl.colors(64, "viridis"),
-        main = sprintf("t = %g s", run$diag$time[k]))
+  ximage::ximage(run$h[[k]], extent = c(0, n * dx, 0, n * dx), zlim = c(0.4, 1.6),
+                 col = hcl.colors(96, "viridis"), asp = 1, axes = FALSE,
+                 main = sprintf("t = %g s", run$diag$time[k]))
 }
 ```
 
@@ -300,13 +305,12 @@ mm left out):
 
 ``` r
 
-xs <- (seq_len(120) - 0.5) * 5
-ys <- (seq_len(60) - 0.5) * 5
+ext <- c(0, 120 * 5, 0, 60 * 5)
 h <- wet$h[[10]]
 h[h < 0.001] <- NA
-image(xs, ys, t(z)[, 60:1], col = grey.colors(64), asp = 1,
-      xlab = "x (m)", ylab = "y (m)")
-image(xs, ys, t(h)[, 60:1], col = hcl.colors(64, "Blues 3", rev = TRUE), add = TRUE)
+ximage::ximage(z, extent = ext, col = grey.colors(96), asp = 1,
+               xlab = "x (m)", ylab = "y (m)")
+ximage::ximage(h, extent = ext, col = hcl.colors(96, "Blues 3", rev = TRUE), add = TRUE)
 ```
 
 ![Map of water depth along the valley floor when the rain stops, over
@@ -316,11 +320,11 @@ the grey bed.](shallows_files/figure-html/rain-depth-1.png)
 
 `sw_state(f = )` takes a Coriolis parameter, and
 [`sw_coriolis()`](https://hypertidy.github.io/shallows/reference/sw_coriolis.md)
-gives it from a latitude (or per cell from a projected SpatRaster). With
-no pressure gradient, a uniform current should turn in a circle at the
-inertial period $`2\pi / |f|`$ without losing speed: anticlockwise in
-the southern hemisphere. A doubly periodic flat basin at 43 S, starting
-with 1 m/s eastward:
+gives it from a latitude (or per cell from a state or grid with a CRS).
+With no pressure gradient, a uniform current should turn in a circle at
+the inertial period $`2\pi / |f|`$ without losing speed: anticlockwise
+in the southern hemisphere. A doubly periodic flat basin at 43 S,
+starting with 1 m/s eastward:
 
 ``` r
 
@@ -347,15 +351,28 @@ anticlockwise, as expected south of the equator.
 
 ## Rasters in and out
 
-With terra installed, a bed can come from any GDAL raster and results go
-back as rasters with the same extent and CRS.
-[`sw_generate()`](https://hypertidy.github.io/shallows/reference/sw_generate.md)
-returns a SpatRaster in local metres by default;
-[`sw_from_rast()`](https://hypertidy.github.io/shallows/reference/sw_from_rast.md)
-builds a state from it, and
-[`sw_rast()`](https://hypertidy.github.io/shallows/reference/sw_rast.md)
-turns a run into one layer per output time (depth, surface elevation,
-speed or momentum).
+Raster input and output go through GDAL with
+[gdalraster](https://github.com/firelab/gdalraster). Grids use the
+layout of
+[`gdalraster::read_ds()`](https://firelab.github.io/gdalraster/reference/read_ds.html):
+cell values in raster order (row major, top row first) with a `gis`
+attribute holding the extent, dimensions and CRS.
+[`ximage::ximage()`](https://rdrr.io/pkg/ximage/man/ximage.html) plots
+such a grid directly, in place, and
+[`sw_matrix()`](https://hypertidy.github.io/shallows/reference/sw_matrix.md)
+turns one into a matrix.
+
+- [`sw_from_rast()`](https://hypertidy.github.io/shallows/reference/sw_from_rast.md)
+  builds a state from a grid, a file or GDAL source name, or an open
+  [`gdalraster::GDALRaster`](https://firelab.github.io/gdalraster/reference/GDALRaster-class.html),
+  keeping the extent and CRS.
+- [`sw_generate()`](https://hypertidy.github.io/shallows/reference/sw_generate.md)
+  returns a grid in local metres (no CRS).
+- [`sw_frames()`](https://hypertidy.github.io/shallows/reference/sw_frames.md)
+  turns a run into one grid per output time: depth, surface elevation,
+  speed or momentum.
+- [`sw_write()`](https://hypertidy.github.io/shallows/reference/sw_write.md)
+  writes those frames to a multi-band GeoTIFF.
 
 A reservoir with a dam breached over 20 m, filled to 14 m behind the
 dam:
@@ -363,20 +380,48 @@ dam:
 ``` r
 
 bed <- sw_generate("reservoir", nx = 300, ny = 80, dx = 5, breach = 20)
-lake <- sw_fill_lake(terra::as.matrix(bed, wide = TRUE), i0 = 40, j0 = 100, level = 14)
+# fill behind the intact dam, then run on the breached bed
+lake <- sw_fill_lake(sw_generate("reservoir", nx = 300, ny = 80, dx = 5),
+                     i0 = 40, j0 = 100, level = 14)
 s <- sw_from_rast(bed, h = lake, manning = 0.03)
 r <- sw_run(s, times = c(20, 60, 120), bc = "open")
 r
-#> shallows run: 80 x 300 cells, 3 frames to t = 120 s, 1557 steps
-#> max |mass budget error| (relative): 1.42e-15
-terra::plot(sw_rast(r, "speed"), nc = 1, range = c(0, 8))
+#> shallows run: 80 x 300 cells, 3 frames to t = 120 s, 1485 steps
+#> max |mass budget error| (relative): 6.68e-15
+sp <- sw_frames(r, "speed")
+# ximage leaves values outside zlim transparent, so cover the full range
+zl <- c(0, max(unlist(sp), na.rm = TRUE))
+zl
+#> [1]  0.00000 12.60972
+op <- par(mfrow = c(3, 1), mar = c(1, 1, 2, 1))
+for (fr in sp) {
+  ximage::ximage(bed, col = grey.colors(96), asp = 1, axes = FALSE,
+                 main = sprintf("speed over the bed, t = %g s", attr(fr, "time")))
+  ximage::ximage(fr, zlim = zl, col = hcl.colors(96, "Inferno"), add = TRUE)
+}
 ```
 
 ![Three maps of flow speed after a reservoir dam breach at 20, 60 and
 120 seconds.](shallows_files/figure-html/reservoir-1.png)
 
-Writing the frames is then one call, for example
-`terra::writeRaster(sw_rast(r, "h"), "depth.tif")`.
+``` r
+
+par(op)
+```
+
+Writing the frames is then one call, and the file reads back with any
+GDAL tool:
+
+``` r
+
+f <- tempfile(fileext = ".tif")
+sw_write(r, f, "h")
+ds <- new(gdalraster::GDALRaster, f)
+c(bands = ds$getRasterCount(), band_3 = ds$getDescription(3))
+#>     bands    band_3 
+#>       "3" "h_t120s"
+ds$close()
+```
 
 For a real place,
 [`sw_extract()`](https://hypertidy.github.io/shallows/reference/sw_extract.md)

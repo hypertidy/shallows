@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">shallows</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,18 @@
       <small>Source: <a href="https://github.com/hypertidy/shallows/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.0.9003" id="shallows-0109003">shallows 0.1.0.9003<a class="anchor" aria-label="anchor" href="#shallows-0109003"></a></h2>
+<ul><li>Raster input and output now use gdalraster instead of terra, and plots use ximage. Both are in Suggests; terra is no longer used.</li>
+<li>Grids follow <code><a href="https://firelab.github.io/gdalraster/reference/read_ds.html" class="external-link">gdalraster::read_ds()</a></code>: a row-major vector with a <code>gis</code> attribute (bbox, dim, srs). <code><a href="https://rdrr.io/pkg/ximage/man/ximage.html" class="external-link">ximage::ximage()</a></code> plots one directly. Extents in states are <code>c(xmin, xmax, ymin, ymax)</code>, the ximage convention.</li>
+<li>Breaking: <code>sw_rast()</code> is replaced by <code><a href="../reference/sw_frames.html">sw_frames()</a></code> (a list of grids, one per output time) and <code><a href="../reference/sw_write.html">sw_write()</a></code> (multi-band GeoTIFF with band descriptions and times).</li>
+<li>Breaking: <code><a href="../reference/sw_generate.html">sw_generate()</a></code> returns a grid by default (<code>as = "grid"</code>) instead of a SpatRaster, and <code><a href="../reference/sw_extract.html">sw_extract()</a></code> returns the bed as a grid with a <code>source</code> attribute instead of a two-layer SpatRaster.</li>
+<li>
+<code><a href="../reference/sw_from_rast.html">sw_from_rast()</a></code> takes a file or GDAL source name, a <code><a href="https://firelab.github.io/gdalraster/reference/GDALRaster-class.html" class="external-link">gdalraster::GDALRaster</a></code>, or a grid. <code><a href="../reference/sw_coriolis.html">sw_coriolis()</a></code> takes a state or grid with a CRS.</li>
+<li>New <code><a href="../reference/sw_matrix.html">sw_matrix()</a></code> gives a grid as a matrix. <code><a href="../reference/sw_state.html">sw_state()</a></code>, <code><a href="../reference/sw_fill_lake.html">sw_fill_lake()</a></code> and <code><a href="../reference/sw_fill_sea.html">sw_fill_sea()</a></code> accept grids directly.</li>
+<li>
+<code>inst/examples/mcrobies-storm.R</code> uses gdalraster (warp, hillshade, GeoTIFF output) and ximage.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0.9002" id="shallows-0109002">shallows 0.1.0.9002<a class="anchor" aria-label="anchor" href="#shallows-0109002"></a></h2>
 <ul><li>New vignette, “Shallow water on raster grids with shallows”: the model, setting up and reading a run, dam breaks and convergence, lake at rest, wetting and drying in Thacker’s bowl, rain and the water budget, Earth rotation, rasters in and out, and the R reference scheme.</li>

@@ -1,8 +1,8 @@
-# Build a state from a terra DEM
+# Build a state from a DEM
 
-Reads the bed from a single-layer SpatRaster, keeping its extent and CRS
-so outputs can be written back as georeferenced rasters. Missing bed
-cells are filled with the maximum elevation plus 100 m (a high wall).
+Reads the bed from a raster, keeping its extent and CRS so outputs can
+be written back as georeferenced rasters. Missing bed cells are filled
+with the maximum elevation plus 100 m (a high wall).
 
 ## Usage
 
@@ -14,9 +14,10 @@ sw_from_rast(dem, ...)
 
 - dem:
 
-  SpatRaster in metres: projected CRS, or none for a generated bed
-  (\[sw_generate()\]); a \`z\` layer is used if there are several
-  (\[sw_extract()\])
+  the bed in metres, in a projected CRS (or none, for a generated bed):
+  a file or GDAL source name, a \`gdalraster::GDALRaster\`, or a grid as
+  from \[sw_generate()\], \[sw_extract()\] or \`gdalraster::read_ds()\`.
+  Only the first band is used
 
 - ...:
 

@@ -28,11 +28,12 @@ sw_state(
 
 - z:
 
-  bed elevation matrix (m)
+  bed elevation (m), a matrix or a grid (see \[sw_matrix()\]); use
+  \[sw_from_rast()\] to keep a grid's extent and CRS
 
 - h:
 
-  initial depth (m), matrix or scalar; or give \`eta\`
+  initial depth (m), matrix, grid or scalar; or give \`eta\`
 
 - eta:
 
@@ -67,4 +68,6 @@ sw_state(
 
 - extent, crs:
 
-  optional georeferencing carried through to output
+  optional georeferencing carried through to output: extent as \`c(xmin,
+  xmax, ymin, ymax)\` (the \`ximage::ximage()\` convention) and the CRS
+  as WKT or any string GDAL understands

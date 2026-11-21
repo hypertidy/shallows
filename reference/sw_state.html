@@ -11,7 +11,7 @@ number (southward on a north-up raster)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">shallows</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,11 +79,12 @@ number (southward on a north-up raster).</p>
 
 
 <dl><dt id="arg-z">z<a class="anchor" aria-label="anchor" href="#arg-z"></a></dt>
-<dd><p>bed elevation matrix (m)</p></dd>
+<dd><p>bed elevation (m), a matrix or a grid (see [sw_matrix()]); use
+[sw_from_rast()] to keep a grid's extent and CRS</p></dd>
 
 
 <dt id="arg-h">h<a class="anchor" aria-label="anchor" href="#arg-h"></a></dt>
-<dd><p>initial depth (m), matrix or scalar; or give `eta`</p></dd>
+<dd><p>initial depth (m), matrix, grid or scalar; or give `eta`</p></dd>
 
 
 <dt id="arg-eta">eta<a class="anchor" aria-label="anchor" href="#arg-eta"></a></dt>
@@ -118,7 +119,9 @@ Positive in the northern hemisphere, negative in the southern; see
 
 
 <dt id="arg-extent-crs">extent, crs<a class="anchor" aria-label="anchor" href="#arg-extent-crs"></a></dt>
-<dd><p>optional georeferencing carried through to output</p></dd>
+<dd><p>optional georeferencing carried through to output:
+extent as `c(xmin, xmax, ymin, ymax)` (the `ximage::ximage()`
+convention) and the CRS as WKT or any string GDAL understands</p></dd>
 
 </dl></div>
 

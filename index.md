@@ -155,9 +155,9 @@ through it.
   TELEMAC-2D, HEC-RAS 2D (closed source), and GPU codes such as TRITON
   and SERGHEI. Python’s landlab has an overland flow component (de
   Almeida inertial scheme).
-- **What this adds**: no external binary, grids straight from terra/GDAL
-  with CRS kept, results back as rasters, a budget on every run, and
-  code small enough to read and extend.
+- **What this adds**: no external binary, grids straight from GDAL (via
+  gdalraster) with CRS kept, results back as rasters, a budget on every
+  run, and code small enough to read and extend.
 
 ## Terrain: extract a real place or generate one
 
@@ -166,14 +166,21 @@ local metre grid (UTM, or polar stereographic beyond 80 S and 84 N),
 read through GDAL straight from cloud COGs. The finest source that
 covers a cell wins and gaps are filled from the next: the Tasmania 2 m
 DEM (LIST), then Copernicus GLO-30, then GEBCO for the sea floor (GLO-30
-sea cells at 0 m take GEBCO where it is below sea level). The result has
-a `z` layer and a `source` layer saying which source each cell came
-from, and goes straight into
+sea cells at 0 m take GEBCO where it is below sea level). Reading and
+warping is done with
+[gdalraster](https://github.com/firelab/gdalraster). The result is a
+grid in the layout of
+[`gdalraster::read_ds()`](https://firelab.github.io/gdalraster/reference/read_ds.html)
+(cell values in raster order with a `gis` attribute holding extent and
+CRS), with a `source` attribute saying which source each cell came from;
+it plots in place with [ximage](https://github.com/hypertidy/ximage) and
+goes straight into
 [`sw_from_rast()`](https://hypertidy.github.io/shallows/reference/sw_from_rast.md).
 
 ``` r
 
 bed <- sw_extract(147.45, -43.05, size = 40000, res = 200)  # Storm Bay
+ximage::ximage(bed, col = hcl.colors(96, "Earth"))
 s <- sw_from_rast(bed, eta = 0)
 ```
 
@@ -193,33 +200,43 @@ open to the edge.
 ``` r
 
 z <- sw_generate("reservoir", nx = 300, ny = 80, dx = 5, breach = 20)
-lake <- sw_fill_lake(sw_generate("reservoir", nx = 300, ny = 80, dx = 5, as = "matrix"),
+# fill behind the intact dam, then run on the breached bed
+lake <- sw_fill_lake(sw_generate("reservoir", nx = 300, ny = 80, dx = 5),
                      i0 = 40, j0 = 100, level = 14)
 s <- sw_from_rast(z, h = lake)
 run <- sw_run(s, times = c(0, 30, 60, 120), bc = "open")
 run
 #> shallows run: 80 x 300 cells, 4 frames to t = 120 s, 1488 steps
-#> max |mass budget error| (relative): 2.78e-15
-terra::plot(sw_rast(run, "h"), nc = 1, range = c(0, max(lake)))
+#> max |mass budget error| (relative): 2.92e-15
+op <- par(mfrow = c(4, 1), mar = c(1, 1, 2, 1))
+for (fr in sw_frames(run, "h")) {
+  ximage::ximage(fr, zlim = c(0, max(lake)), col = hcl.colors(96, "Blues 3", rev = TRUE),
+                 asp = 1, axes = FALSE, main = sprintf("t = %g s", attr(fr, "time")))
+}
 ```
 
 ![Four maps of depth in a valley reservoir at 0, 30, 60 and 120 seconds,
 showing water escaping through the dam breach and flowing down the
 valley.](reference/figures/README-reservoir-1.png)
 
+``` r
+
+par(op)
+```
+
 ## Earth rotation
 
 `sw_state(f = )` takes a Coriolis parameter (s^-1), one value or a
 matrix;
 [`sw_coriolis()`](https://hypertidy.github.io/shallows/reference/sw_coriolis.md)
-gives it from latitudes or, per cell, from a SpatRaster’s CRS. The
-rotation is applied exactly (Strang half turns around the flow step), so
-an inertial oscillation keeps its speed to rounding and turns clockwise
-in the northern hemisphere. Checks: a Kelvin wave stays trapped against
-the right-hand wall (relative L2 0.09 at order 2, 10 km cells), and
-geostrophic adjustment converges with the grid (surface error 4.5, 2.0,
-0.8% at 10, 5, 2.5 km). Edges can be `"periodic"` (in pairs) for
-channels and doubly periodic basins.
+gives it from latitudes or, per cell, from the CRS of a state or grid.
+The rotation is applied exactly (Strang half turns around the flow
+step), so an inertial oscillation keeps its speed to rounding and turns
+clockwise in the northern hemisphere. Checks: a Kelvin wave stays
+trapped against the right-hand wall (relative L2 0.09 at order 2, 10 km
+cells), and geostrophic adjustment converges with the grid (surface
+error 4.5, 2.0, 0.8% at 10, 5, 2.5 km). Edges can be `"periodic"` (in
+pairs) for channels and doubly periodic basins.
 
 ## Limits and next steps
 
@@ -230,9 +247,11 @@ channels and doubly periodic basins.
 - No infiltration (Green-Ampt would be next), no land-cover roughness
   map (the solver already takes a Manning matrix), no inflow hydrograph
   boundary.
-- Outputs are matrices and SpatRasters; writing them as meshcore
-  surfaces or streaming frames to the browser viewer are natural next
-  steps.
+- Outputs are matrices and GDAL-style grids
+  ([`sw_frames()`](https://hypertidy.github.io/shallows/reference/sw_frames.md),
+  [`sw_write()`](https://hypertidy.github.io/shallows/reference/sw_write.md)
+  for GeoTIFF, plotted with ximage); writing them as meshcore surfaces
+  or streaming frames to the browser viewer are natural next steps.
 
 ## References
 

@@ -14,8 +14,12 @@ sw_fill_sea(z, level = 0)
 
 - z:
 
-  bed matrix
+  bed matrix or grid (see \[sw_matrix()\])
 
 - level:
 
   sea level (m)
+
+## Value
+
+depth matrix

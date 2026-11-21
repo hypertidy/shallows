@@ -15,7 +15,7 @@ sw_fill_lake(z, i0, j0, level)
 
 - z:
 
-  bed matrix
+  bed matrix or grid (see \[sw_matrix()\])
 
 - i0, j0:
 
@@ -24,3 +24,7 @@ sw_fill_lake(z, i0, j0, level)
 - level:
 
   water level (m)
+
+## Value
+
+depth matrix
