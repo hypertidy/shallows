@@ -1,0 +1,9 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  shallows: shallows.html
+last_built: 2026-11-21T21:23Z
+urls:
+  reference: https://hypertidy.github.io/shallows/reference
+  article: https://hypertidy.github.io/shallows/articles
