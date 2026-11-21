@@ -1,4 +1,4 @@
-# shallows 0.0.0.9001
+# shallows 0.1.0.9001
 
 * The C++ interface now uses cpp11 instead of Rcpp. cpp11 is header only,
   so the package has no runtime dependency on it; the solver kernel is
@@ -10,7 +10,7 @@
   lake at rest, breached reservoir).
 * Added a contributor code of conduct.
 
-# shallows 0.0.0.9000
+# shallows 0.1.0
 
 * Two-dimensional shallow water solver on regular grids: HLL fluxes,
   hydrostatic reconstruction, first or second order, wetting and drying,
