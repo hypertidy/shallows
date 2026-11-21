@@ -85,7 +85,7 @@ plot(exact$x, exact$h, type = "l", xlab = "x (m)", ylab = "depth (m)")
 points(x, run$h[[1]][1, ], pch = 19, cex = 0.3, col = "firebrick")
 ```
 
-![](man/figures/README-stoker-1.png)<!-- -->
+<img src="man/figures/README-stoker-1.png" alt="Depth against distance for the Stoker dam break: model points lie on the analytic curve, through the rarefaction, middle state and shock."  />
 
 A lake at rest around a dry island stays at rest: the scheme is well
 balanced, so the surface and momentum do not move off round-off.
@@ -192,7 +192,7 @@ run
 terra::plot(sw_rast(run, "h"), nc = 1, range = c(0, max(lake)))
 ```
 
-![](man/figures/README-reservoir-1.png)<!-- -->
+<img src="man/figures/README-reservoir-1.png" alt="Four maps of depth in a valley reservoir at 0, 30, 60 and 120 seconds, showing water escaping through the dam breach and flowing down the valley."  />
 
 ## Earth rotation
 

@@ -1,3 +1,12 @@
+# shallows 0.1.0.9002
+
+* New vignette, "Shallow water on raster grids with shallows": the model,
+  setting up and reading a run, dam breaks and convergence, lake at rest,
+  wetting and drying in Thacker's bowl, rain and the water budget, Earth
+  rotation, rasters in and out, and the R reference scheme.
+* pkgdown site at <https://hypertidy.github.io/shallows/>, built and
+  deployed by GitHub Actions.
+
 # shallows 0.1.0.9001
 
 * The C++ interface now uses cpp11 instead of Rcpp. cpp11 is header only,

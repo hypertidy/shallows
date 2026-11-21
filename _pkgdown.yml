@@ -1,0 +1,63 @@
+url: https://hypertidy.github.io/shallows/
+
+template:
+  bootstrap: 5
+  light-switch: true
+  bslib:
+    primary: "#0b5c8a"
+    link-color: "#0b5c8a"
+    base_font: {google: "Source Sans 3"}
+    heading_font: {google: "Source Serif 4"}
+    code_font: {google: "JetBrains Mono"}
+    navbar-bg: "#0b3d5c"
+    navbar-dark-color: "rgba(255, 255, 255, 0.85)"
+    navbar-dark-hover-color: "#ffffff"
+    navbar-dark-brand-color: "#ffffff"
+
+navbar:
+  bg: primary
+  type: dark
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github, lightswitch]
+
+home:
+  title: shallows - shallow water simulation on raster grids
+  sidebar:
+    structure: [links, license, community, citation, authors, dev]
+
+reference:
+- title: Set up and run
+  desc: Build a state, run the solver, continue a run.
+  contents:
+  - sw_state
+  - sw_run
+  - sw_continue
+  - sw_volume
+  - sw_coriolis
+- title: Rasters in and out
+  desc: Beds from terra SpatRasters, results back as georeferenced rasters.
+  contents:
+  - sw_from_rast
+  - sw_rast
+- title: Terrain
+  desc: Generate synthetic beds, extract real ones, fill lakes and seas.
+  contents:
+  - sw_generate
+  - sw_shapes
+  - sw_fbm
+  - sw_fill_lake
+  - sw_fill_sea
+  - sw_extract
+  - sw_sources
+  - sw_local_crs
+- title: Benchmarks and reference
+  desc: Analytic solutions used for validation, and the plain R scheme.
+  contents:
+  - dambreak_ritter
+  - dambreak_stoker
+  - thacker_bowl
+  - sw_run_r
+
+news:
+  releases: []
