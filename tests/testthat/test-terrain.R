@@ -1,8 +1,6 @@
-test_that("generated beds match the JS generator and are deterministic", {
+test_that("generated beds are deterministic", {
+  ## agreement with the JS generator is checked in test-parity.R
   z <- sw_generate("island", nx = 40, ny = 30, dx = 10, noise = list(amp = 3, seed = 7), as = "matrix")
-  ## references from playproj src/core/terrain.js (test/check-terrain.mjs)
-  expect_equal(z[1, 1], 11.8909876344848, tolerance = 1e-10)
-  expect_equal(z[15, 20], 49.558754836647, tolerance = 1e-10)
   expect_identical(z, sw_generate("island", nx = 40, ny = 30, dx = 10, noise = list(amp = 3, seed = 7), as = "matrix"))
   expect_false(identical(z, sw_generate("island", nx = 40, ny = 30, dx = 10, noise = list(amp = 3, seed = 8), as = "matrix")))
   for (s in names(sw_shapes())) expect_true(all(is.finite(sw_generate(s, nx = 20, ny = 10, dx = 50, as = "matrix"))))
